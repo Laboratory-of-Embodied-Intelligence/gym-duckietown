@@ -302,7 +302,7 @@ class Simulator(gym.Env):
 
         if self.randomize_maps_on_reset:
             import os
-            self.map_names = os.listdir('maps')
+            self.map_names = os.listdir(os.path.dirname(__file__)+'/maps')
             self.map_names = [mapfile.replace('.yaml', '') for mapfile in self.map_names]
 
         # Initialize the state
@@ -1227,8 +1227,9 @@ class Simulator(gym.Env):
 
         # Compute the robot's speed
         delta_pos = self.cur_pos - prev_pos
-        self.speed = np.linalg.norm(delta_pos) / delta_time
-
+        self.speed = np.linalg.norm(delta_pos) / delta_time * math.copysign(1,self.wheelVels[0]) * math.copysign(1, self.wheelVels[1])
+        if self.wheelVels[0] < 0 and self.wheelVels[1] < 0:
+            self.speed = -self.speed
         # Update world objects
         for obj in self.objects:
             if not obj.static and obj.kind == "duckiebot":
@@ -1324,7 +1325,7 @@ class Simulator(gym.Env):
 
             # Compute the reward
             reward = (
-                    +1.0 * speed * lp.dot_dir +
+                    +2.5 * speed * lp.dot_dir +
                     -10 * np.abs(lp.dist) +
                     +40 * col_penalty
             )
@@ -1414,7 +1415,7 @@ class Simulator(gym.Env):
         # Note: we add a bit of noise to the camera position for data augmentation
         pos = self.cur_pos
         angle = self.cur_angle
-        logger.info('Pos: %s angle %s' % (self.cur_pos, self.cur_angle))
+        #logger.info('Pos: %s angle %s' % (self.cur_pos, self.cur_angle))
         if self.domain_rand:
             pos = pos + self.randomization_settings['camera_noise']
             
